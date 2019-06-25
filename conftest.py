@@ -1,32 +1,66 @@
 import pytest
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.common.keys import Keys
+#from selenium.webdriver.firefox.options import Options
 from datetime import datetime
 
 driver = None
 
 def pytest_addoption(parser):
     parser.addoption("--browser", action="store", default="chrome_headless")
+    parser.addoption("--os", action="store", default="windows")
 
 @pytest.fixture(scope='class')
 def driver_init(request):
     global driver
     browser = request.config.option.browser
+    os = request.config.option.os
+
+    executable_path_dict  = {
+        "windows": {
+            "chrome": "resources/webdrivers/windows/chromedriver.exe",
+            "firefox": "resources/webdrivers/windows/geckodriver.exe",
+            "ie": "resources/webdrivers/windows/IEDriverServer.exe"
+        },
+        "mac": {
+            "chrome": "resources/webdrivers/mac/chromedriver",
+            "firefox": "resources/webdrivers/mac/geckodriver"
+        },
+        "linux": {
+            "chrome": "resources/webdrivers/linux/chromedriver",
+            "firefox": "resources/webdrivers/linux/geckodriver"
+        }
+    }
+
+    chrome_options_dict = {
+        "chrome": ["--start-maximized", "--ignore-certificate-errors", "--incognito"],
+        "chrome_headless": ["--start-maximized", "--ignore-certificate-errors", "--incognito", "--headless", "--disable-gpu"]
+    }
     
-    if browser == "chrome":
-        chrome_options = Options()
-        chrome_options.add_argument("--start-maximized")
-        chrome_options.add_argument("--ignore-certificate-errors")
-        chrome_options.add_argument("--incognito")
-        driver = webdriver.Chrome(executable_path="resources/webdrivers/chromedriver.exe", options=chrome_options)
-    elif browser == "chrome_headless":
-        chrome_options = Options()
-        chrome_options.add_argument("--start-maximized")
-        chrome_options.add_argument("--ignore-certificate-errors")
-        chrome_options.add_argument("--incognito")
-        chrome_options.add_argument("--headless")
-        chrome_options.add_argument("--incognito")
-        driver = webdriver.Chrome(executable_path="resources/webdrivers/chromedriver.exe", options=chrome_options)
+    if "chrome" in browser:
+        options = Options()
+        # adds different chrome options from a dictionary depending on if it should be ran headless or not
+        chrome_options = chrome_options_dict[browser]
+        for chrome_option in chrome_options:
+            options.add_argument(chrome_option)
+        driver = webdriver.Chrome(executable_path=executable_path_dict[os]["chrome"], options=options)
+    elif "firefox" in browser:
+        #TODO: Add a firefox specific profile or options for testing
+        driver = webdriver.Firefox(executable_path=executable_path_dict[os]["firefox"])
+        driver.maximize_window()
+    elif "internet_explorer" in browser:
+        capabilities = DesiredCapabilities.INTERNETEXPLORER.copy()
+        capabilities["ignoreZoomSetting"] = True
+        driver = webdriver.Ie(executable_path=executable_path_dict["windows"]["ie"], capabilities=capabilities)
+        driver.maximize_window()
+        """
+        the ctrl + 0 key command only works if the default zoom level of IE is 100% 
+        default zoom level is controlled by the default scaling option in the display settings on the machine running the IE browser
+        if the default zoom level is greater or less than 100% the zoom level should be manually set
+        """
+        driver.find_element_by_tag_name("html").send_keys(Keys.CONTROL + "0")
     else: 
         pass
 
