@@ -1,6 +1,8 @@
 import pytest
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.common.desired_capabilities import DesiredCapabilities
+from selenium.webdriver.common.keys import Keys
 #from selenium.webdriver.firefox.options import Options
 from datetime import datetime
 
@@ -31,29 +33,34 @@ def driver_init(request):
             "firefox": "resources/webdrivers/linux/geckodriver"
         }
     }
+
+    chrome_options_dict = {
+        "chrome": ["--start-maximized", "--ignore-certificate-errors", "--incognito"],
+        "chrome_headless": ["--start-maximized", "--ignore-certificate-errors", "--incognito", "--headless", "--disable-gpu"]
+    }
     
-    if browser == "chrome":
+    if "chrome" in browser:
         options = Options()
-        options.add_argument("--start-maximized")
-        options.add_argument("--ignore-certificate-errors")
-        options.add_argument("--incognito")
+        # adds different chrome options from a dictionary depending on if it should be ran headless or not
+        chrome_options = chrome_options_dict[browser]
+        for chrome_option in chrome_options:
+            options.add_argument(chrome_option)
         driver = webdriver.Chrome(executable_path=executable_path_dict[os]["chrome"], options=options)
-    elif browser == "chrome_headless":
-        options = Options()
-        options.add_argument("--start-maximized")
-        options.add_argument("--ignore-certificate-errors")
-        options.add_argument("--incognito")
-        options.add_argument("--headless")
-        options.add_argument("--disable-gpu")
-        driver = webdriver.Chrome(executable_path=executable_path_dict[os]["chrome"], options=options)
-    elif browser == "firefox":
+    elif "firefox" in browser:
         #TODO: Add a firefox specific profile or options for testing
         driver = webdriver.Firefox(executable_path=executable_path_dict[os]["firefox"])
         driver.maximize_window()
-    elif browser == "ie":
-        #TODO Add IE specific options for testing, programatically set the zoom level to 100%
-        driver = webdriver.Ie(executable_path=executable_path_dict["windows"]["ie"])
+    elif "internet_explorer" in browser:
+        capabilities = DesiredCapabilities.INTERNETEXPLORER.copy()
+        capabilities["ignoreZoomSetting"] = True
+        driver = webdriver.Ie(executable_path=executable_path_dict["windows"]["ie"], capabilities=capabilities)
         driver.maximize_window()
+        """
+        the ctrl + 0 key command only works if the default zoom level of IE is 100% 
+        default zoom level is controlled by the default scaling option in the display settings on the machine running the IE browser
+        if the default zoom level is greater or less than 100% the zoom level should be manually set
+        """
+        driver.find_element_by_tag_name("html").send_keys(Keys.CONTROL + "0")
     else: 
         pass
 

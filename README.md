@@ -1,6 +1,10 @@
 # selenium-pytest-skeleton
 selenium skeleton project using the pytest test framework
 
+## required software
+Python 3.6.4
+pip
+
 ## installing required packages
 ```bash
 pip install -r requirements.txt
@@ -21,7 +25,7 @@ Example
 pytest --html=test_output/report.html -v -s src/tests --browser firefox --os windows
 ```
 
-Browser Options (chrome, chrome_headless, firefox, ie)
-OS Options (windows, mac, linux)
+Browser Options: chrome, chrome_headless, firefox, internet_explorer
+OS Options: windows, mac, linux
 
 
